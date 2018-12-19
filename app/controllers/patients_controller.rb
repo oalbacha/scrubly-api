@@ -4,13 +4,13 @@ class PatientsController < ApplicationController
 
   # GET /patients
   def index
-    @patients = Patient.all
+    @patients = current_user.patients
     json_response(@patients)
   end
 
   # POST /patients
   def create
-    @patient = Patient.create!(patient_params)
+    @patient = current_user.patients.create!(patient_params)
     json_response(@patient, :created)
   end
 

@@ -1,14 +1,18 @@
 require 'rails_helper'
 
 RSpec.describe 'Patients API', type: :request do
+  # add patients owner
+  let(:user) { create(:user) }
   # initialize test data
-  let!(:patients) { create_list(:patient, 10) }
+  let!(:patients) { create_list(:patient, 10,  provider_id: user.id) }
   let(:patient_id) { patients.first.id }
+  # authorize request
+  let(:headers) { valid_headers }
 
   # Test suite for GET /patients
   describe 'GET /patients' do
     # make HTTP get request before each example
-    before { get '/patients' }
+    before { get '/patients', params: {}, headers: headers }
 
     it 'returns patients' do
       # Note 'json' is a custom helper to parse JSON responses
@@ -23,7 +27,7 @@ RSpec.describe 'Patients API', type: :request do
 
   # Test suite for GET /patients/:id
   describe 'GET /patients/:id' do
-    before { get "/patients/#{patient_id}" }
+    before { get "/patients/#{patient_id}", params: {}, headers: headers }
 
     context 'when the record exists' do
       it 'returns the patient' do
@@ -52,10 +56,12 @@ RSpec.describe 'Patients API', type: :request do
   # Test suite for POST /patients
   describe 'POST /patients' do
     # valid payload
-    let(:valid_attributes) { { first_name: 'John', phone: '7155551234' } }
+    let(:valid_attributes) do
+      { first_name: 'John', phone: '7155551234' }.to_json
+    end
 
     context 'when the request is valid' do
-      before { post '/patients', params: valid_attributes }
+      before { post '/patients', params: valid_attributes, headers: headers }
 
       it 'creates a patient' do
         expect(json['first_name']).to eq('John')
@@ -67,24 +73,26 @@ RSpec.describe 'Patients API', type: :request do
     end
 
     context 'when the request is invalid' do
-      before { post '/patients', params: { first_name: 'Fakenews' } }
+      let(:invalid_attributes) { { first_name: nil }.to_json }
+      before { post '/patients', params: invalid_attributes, headers: headers }
 
       it 'returns status code 422' do
         expect(response).to have_http_status(422)
       end
 
       it 'returns a validation failure message' do
-        expect(response.body).to match(/Validation failed: Phone can't be blank/)
+        expect(json['message']).to include("Phone can't be blank")
+        expect(json['message']).to include("First name can't be blank")
       end
     end
   end
 
   # Test suite for PUT /patients/:id
   describe 'PUT /patients/:id' do
-    let(:valid_attributes) { { name: 'Marc Jeff' } }
+    let(:valid_attributes) { { name: 'Marc Jeff' }.to_json }
 
     context 'when the record exists' do
-      before { put "/patients/#{patient_id}", params: valid_attributes }
+      before { put "/patients/#{patient_id}", params: valid_attributes, headers: headers }
 
       it 'updates the record' do
         expect(response.body).to be_empty
@@ -98,7 +106,7 @@ RSpec.describe 'Patients API', type: :request do
 
   # Test suite for DELETE /patients/:id
   describe 'DELETE /patients/:id' do
-    before { delete "/patients/#{patient_id}" }
+    before { delete "/patients/#{patient_id}", params: {}, headers: headers }
 
     it 'returns status code 204' do
       expect(response).to have_http_status(204)
