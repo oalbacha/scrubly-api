@@ -4,7 +4,7 @@ module V1
 
     # GET /patients
     def index
-      @patients = current_user.patients
+      @patients = current_user.patients.paginate(page: params[:page], per_page: 20)
       json_response(@patients)
     end
 

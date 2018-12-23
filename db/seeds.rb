@@ -5,3 +5,8 @@
 #
 #   movies = Movie.create([{ name: 'Star Wars' }, { name: 'Lord of the Rings' }])
 #   Character.create(name: 'Luke', movie: movies.first)
+# seed 50 records
+50.times do
+  patient = Patient.create(first_name: Faker::FunnyName.name, last_name: Faker::FunnyName.name, phone: Faker::FunnyName.name)
+  patient.appointments.create(title: Faker::FamousLastWords.last_words)
+end
